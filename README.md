@@ -1,6 +1,6 @@
 # komp
 
-Unified archive & image toolkit for macOS. Compress, add, list, extract, clean, and convert archives; build dmg/iso/pkg images. One binary, 17 codecs, interactive TTY picker, and native Finder selection.
+Unified archive & image toolkit for macOS. Compress, add, list, extract, clean, test, and convert archives; build and extract dmg/iso/pkg images. One binary, 17 codecs, interactive TTY picker, and native Finder selection.
 
 ## Install
 
@@ -22,9 +22,29 @@ komp add project.zip newfile.go
 # List archive contents
 komp ls project.zip
 
+# Extract an archive
+komp un project.zip
+
+# Strip junk members from an archive
+komp clean --groups macos,vcs project.zip
+
+# Test archive integrity
+komp t project.zip
+
 # Interactive mode — omit files/format in a terminal to get a TUI picker
 komp
 ```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `komp [format] [files...]` | Compress files/folders (default command) |
+| `komp add <archive> [files...]` | Add files to an existing archive |
+| `komp ls <archive>` | List archive contents |
+| `komp un <archive>...` | Extract archives (and disk images) |
+| `komp clean <archive>...` | Strip junk members from archives |
+| `komp t <archive>...` | Test archive integrity |
 
 ## Flags
 
@@ -40,6 +60,33 @@ komp
 | `--dry-run` | | false | print plan, touch nothing |
 | `--backup` | | false | back up overwritten targets |
 
+### un flags
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--output` | `-o` | — | destination directory |
+| `--here` | | false | extract into current directory |
+| `--overwrite` | | false | replace existing files |
+
+### clean flags
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--groups` | | — | comma list: `macos,windows,vcs,hidden` |
+| `--dry-run` | | false | show what would be removed |
+| `--backup` | | false | save `<archive>.bak` first |
+
+## Junk groups
+
+`komp clean` strips known junk from archives. Select groups with `--groups`:
+
+| Group | Matches |
+|-------|---------|
+| `macos` | `.DS_Store`, `._*`, `__MACOSX/`, `.Spotlight-V100`, `.Trashes`, `.fseventsd`, `.LSOverride`, `Icon\r` |
+| `windows` | `Thumbs.db`, `desktop.ini`, `$RECYCLE.BIN/` |
+| `vcs` | `.git/`, `.svn/`, `.hg/` (any depth) |
+| `hidden` | dotfiles not already claimed by another group |
+
 ## Exit codes
 
 | Code | Meaning |
@@ -47,7 +94,8 @@ komp
 | 0 | success |
 | 1 | runtime / environment error (no input, aborted, osascript failure) |
 | 2 | usage error (unknown format, missing binary, no format in non-interactive mode) |
-| 3 | execution error (compressor / adder / lister failed) |
+| 3 | execution error (compressor / adder / lister / cleaner failed) |
+| 4 | integrity failure (verifier detected corruption) |
 
 ## Codecs
 
@@ -80,6 +128,9 @@ Keyboard Maestro macros can call `komp` directly. Because `komp --finder` reads 
 | Add to most recent archive | `komp add --last --finder` | Requires at least one prior archive |
 | Choose recent archive interactively | `komp add --recent --finder` | TTY-only picker |
 | List recent archive | `komp ls --recent` | TTY-only picker |
+| Extract archive | `komp un --finder` | Prompts for destination |
+| Clean junk from archive | `komp clean --groups macos,vcs <archive>` | Explicit archive required |
+| Test archive integrity | `komp t <archive>` | Reports OK or corruption |
 | Batch compress (one per file) | `komp --finder -f zip --separate --output ~/Archives` | Creates `~/Archives/<name>.zip` per selection |
 | Dry-run plan | `komp --finder -f 7z --dry-run` | Prints plan to stderr, touches nothing |
 
@@ -89,6 +140,9 @@ Keyboard Maestro macros can call `komp` directly. Because `komp --finder` reads 
 
 ## Roadmap
 
-- **P1** (current) — create, add, ls; 17 codecs; Finder selection; interactive TTY picker; recents; dry-run; backup; slow-job notifications.
-- **P2** — extract; test/verify integrity; clean-in-place delete; image building (dmg/iso/pkg); parallel `--separate`; shell completions.
-- **P3** — watch/folder mode with auto-compression; profiles/presets; man page; `brew tap` distribution; remote archive support.
+| Phase | Status | Features |
+|-------|--------|----------|
+| **P1** | ✅ shipped | create, add, ls; 17 codecs; Finder selection; interactive TTY picker; recents; dry-run; backup; slow-job notifications |
+| **P2** | ✅ shipped | extract archives + disk images; test/verify integrity; clean-in-place delete; junk groups (macos/windows/vcs/hidden); destination picker; pre-flight verify |
+| **P3** | planned | watch/folder mode with auto-compression; profiles/presets; man page; `brew tap` distribution; remote archive support
+
