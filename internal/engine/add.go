@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"komp/internal/codec"
+	"github.com/deathrashed/komp/internal/codec"
 )
 
 func Add(archive string, files []string) error {

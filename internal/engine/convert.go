@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"komp/internal/codec"
+	"github.com/deathrashed/komp/internal/codec"
 )
 
 type Options struct {

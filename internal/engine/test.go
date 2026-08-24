@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"komp/internal/codec"
+	"github.com/deathrashed/komp/internal/codec"
 )
 
 func Verify(archive string) error {

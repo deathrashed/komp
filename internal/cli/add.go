@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"komp/internal/engine"
-	"komp/internal/recents"
-	"komp/internal/selection"
-	"komp/internal/ui"
-	"komp/internal/xdg"
+	"github.com/deathrashed/komp/internal/engine"
+	"github.com/deathrashed/komp/internal/recents"
+	"github.com/deathrashed/komp/internal/selection"
+	"github.com/deathrashed/komp/internal/ui"
+	"github.com/deathrashed/komp/internal/xdg"
 )
 
 var (

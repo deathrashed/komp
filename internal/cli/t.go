@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/spf13/cobra"
-	"komp/internal/engine"
+	"github.com/deathrashed/komp/internal/engine"
 )
 
 var tCmd = &cobra.Command{

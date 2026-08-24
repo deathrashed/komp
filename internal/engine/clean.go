@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"komp/internal/codec"
-	"komp/internal/junk"
+	"github.com/deathrashed/komp/internal/codec"
+	"github.com/deathrashed/komp/internal/junk"
 )
 
 // CleanScan returns how many members each junk group matches in archive.

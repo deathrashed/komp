@@ -1,4 +1,4 @@
-module komp
+module github.com/deathrashed/komp
 
 go 1.27.0
 

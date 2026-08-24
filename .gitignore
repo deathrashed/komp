@@ -1,1 +1,24 @@
+# binaries
 komp
+dist/
+
+# test artifacts
+*.test
+coverage.out
+
+# archives produced by manual testing
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.tar.zst
+*.rar
+*.dmg
+*.iso
+*.sparseimage
+*.sparsebundle
+*.aar
+
+# editor
+.DS_Store
+*.swp

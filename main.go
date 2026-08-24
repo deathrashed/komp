@@ -1,5 +1,5 @@
 package main
 
-import "komp/internal/cli"
+import "github.com/deathrashed/komp/internal/cli"
 
 func main() { cli.Execute() }

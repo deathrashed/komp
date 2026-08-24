@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"komp/internal/image"
+	"github.com/deathrashed/komp/internal/image"
 )
 
 type imgFlags struct {

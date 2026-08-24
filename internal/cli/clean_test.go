@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"komp/internal/engine"
+	"github.com/deathrashed/komp/internal/engine"
 )
 
 func TestCleanCmdPipedWithGroups(t *testing.T) {

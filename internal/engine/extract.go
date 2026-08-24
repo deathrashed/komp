@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"komp/internal/codec"
+	"github.com/deathrashed/komp/internal/codec"
 )
 
 // Extract pulls archive into dest. overwrite=false refuses when any member

@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"komp/internal/codec"
+	"github.com/deathrashed/komp/internal/codec"
 )
 
 func List(archive string) ([]string, error) {

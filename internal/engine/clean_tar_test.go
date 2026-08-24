@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"komp/internal/junk"
+	"github.com/deathrashed/komp/internal/junk"
 )
 
 func TestCleanTarRebuilds(t *testing.T) {

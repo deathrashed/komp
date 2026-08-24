@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"komp/internal/recents"
-	"komp/internal/xdg"
+	"github.com/deathrashed/komp/internal/recents"
+	"github.com/deathrashed/komp/internal/xdg"
 )
 
 func TestLsRecentEmpty(t *testing.T) {

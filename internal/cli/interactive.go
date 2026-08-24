@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"komp/internal/ui"
+	"github.com/deathrashed/komp/internal/ui"
 )
 
 func runInteractive(cmd *cobra.Command) error {

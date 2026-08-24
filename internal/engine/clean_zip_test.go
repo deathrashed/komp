@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"komp/internal/junk"
+	"github.com/deathrashed/komp/internal/junk"
 )
 
 func TestCleanZipRemovesJunkInPlace(t *testing.T) {

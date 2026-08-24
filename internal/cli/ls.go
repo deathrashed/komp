@@ -4,9 +4,9 @@ import (
 	"errors"
 
 	"github.com/spf13/cobra"
-	"komp/internal/engine"
-	"komp/internal/recents"
-	"komp/internal/xdg"
+	"github.com/deathrashed/komp/internal/engine"
+	"github.com/deathrashed/komp/internal/recents"
+	"github.com/deathrashed/komp/internal/xdg"
 )
 
 var (

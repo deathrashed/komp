@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/huh"
-	"komp/internal/codec"
-	"komp/internal/junk"
-	"komp/internal/recents"
+	"github.com/deathrashed/komp/internal/codec"
+	"github.com/deathrashed/komp/internal/junk"
+	"github.com/deathrashed/komp/internal/recents"
 )
 
 var execLook = exec.LookPath

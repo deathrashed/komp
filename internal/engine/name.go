@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"komp/internal/codec"
+	"github.com/deathrashed/komp/internal/codec"
 )
 
 // OutputName builds the output path in outDir (or the input's dir when
