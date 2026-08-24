@@ -45,6 +45,10 @@ komp
 | `komp un <archive>...` | Extract archives (and disk images) |
 | `komp clean <archive>...` | Strip junk members from archives |
 | `komp t <archive>...` | Test archive integrity |
+| `komp cv <archive>` | Recompress to another format |
+| `komp img <src>` | Build a disk image from a folder |
+| `komp completions <shell>` | Generate shell completions |
+| `komp man` | Print a man page |
 
 ## Flags
 
@@ -131,6 +135,9 @@ Keyboard Maestro macros can call `komp` directly. Because `komp --finder` reads 
 | Extract archive | `komp un --finder` | Prompts for destination |
 | Clean junk from archive | `komp clean --groups macos,vcs <archive>` | Explicit archive required |
 | Test archive integrity | `komp t <archive>` | Reports OK or corruption |
+| Test archive integrity | `komp t <archive>` | Reports OK or corruption |
+| Recompress archive | `komp cv <archive> --to zstd` | Inner-tar fast path for .tar.gz → .tar.zst |
+| Build disk image | `komp img ~/folder --type dmg --volname "My Disk"` | Creates .dmg via hdiutil |
 | Batch compress (one per file) | `komp --finder -f zip --separate --output ~/Archives` | Creates `~/Archives/<name>.zip` per selection |
 | Dry-run plan | `komp --finder -f 7z --dry-run` | Prints plan to stderr, touches nothing |
 
@@ -144,5 +151,5 @@ Keyboard Maestro macros can call `komp` directly. Because `komp --finder` reads 
 |-------|--------|----------|
 | **P1** | ✅ shipped | create, add, ls; 17 codecs; Finder selection; interactive TTY picker; recents; dry-run; backup; slow-job notifications |
 | **P2** | ✅ shipped | extract archives + disk images; test/verify integrity; clean-in-place delete; junk groups (macos/windows/vcs/hidden); destination picker; pre-flight verify |
-| **P3** | planned | watch/folder mode with auto-compression; profiles/presets; man page; `brew tap` distribution; remote archive support
+| **P3** | ✅ shipped | convert/cv recompression (including inner-tar reuse); img dmg/sparse/iso/pkg; completions; man page; macro retirement checklist
 
