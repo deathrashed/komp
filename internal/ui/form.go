@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 
 	"github.com/charmbracelet/huh"
 	"komp/internal/codec"
@@ -12,7 +13,6 @@ import (
 	"komp/internal/recents"
 )
 
-// execLook is indirection for exec.LookPath to allow testing.
 var execLook = exec.LookPath
 
 func Interactive() bool {
@@ -129,8 +129,12 @@ func PickDestination(defaultVal string) (string, error) {
 	err := huh.NewForm(huh.NewGroup(
 		huh.NewInput().Title("Destination").Value(&d).Placeholder(defaultVal),
 	)).Run()
-	if err != nil { return "", err }
-	if d == "" { return defaultVal, nil }
+	if err != nil {
+		return "", err
+	}
+	if d == "" {
+		return defaultVal, nil
+	}
 	return d, nil
 }
 
@@ -159,22 +163,87 @@ func PickArchive() (string, error) {
 	if !Interactive() {
 		return "", errors.New("archive picking needs a terminal")
 	}
-	files, err := runPicker("")
+	archives := listArchives(".")
+	opts := make([]huh.Option[string], 0, len(archives)+2)
+	for _, a := range archives {
+		opts = append(opts, huh.NewOption(a, a))
+	}
+	opts = append(opts,
+		huh.NewOption("📁 Browse for file...", "__browse__"),
+		huh.NewOption("✏️  Type path manually...", "__type__"),
+	)
+	var choice string
+	err := huh.NewForm(huh.NewGroup(
+		huh.NewSelect[string]().Title("Select archive").Options(opts...).Value(&choice),
+	)).Run()
 	if err != nil {
 		return "", err
 	}
-	var valid []string
-	for _, f := range files {
-		if _, ok := codec.ByExtension(f); ok {
-			valid = append(valid, f)
+	switch choice {
+	case "__browse__":
+		var path string
+		_ = huh.NewForm(huh.NewGroup(
+			huh.NewFilePicker().Title("Select archive").AllowedTypes(archiveExts()).Value(&path),
+		)).Run()
+		return path, err
+	case "__type__":
+		var path string
+		_ = huh.NewForm(huh.NewGroup(
+			huh.NewInput().Title("Archive path").Value(&path).Placeholder("/path/to/archive.zip"),
+		)).Run()
+		return path, err
+	default:
+		return choice, nil
+	}
+}
+
+func PickImageSource() (string, error) {
+	if !Interactive() {
+		return "", errors.New("source picking needs a terminal")
+	}
+	for {
+		files, err := runPicker("")
+		if err != nil {
+			return "", err
+		}
+		for _, f := range files {
+			st, err := os.Stat(f)
+			if err == nil && st.IsDir() {
+				return f, nil
+			}
+		}
+		fmt.Fprintln(os.Stderr, "error: select a folder (not a file)")
+	}
+}
+
+func listArchives(dir string) []string {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+	var archives []string
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		if _, ok := codec.ByExtension(e.Name()); ok {
+			archives = append(archives, e.Name())
 		}
 	}
-	switch len(valid) {
-	case 1:
-		return valid[0], nil
-	case 0:
-		return "", errors.New("no valid archive selected — pick a zip, 7z, tar, etc.")
-	default:
-		return "", errors.New("select exactly one archive file")
+	sort.Strings(archives)
+	return archives
+}
+
+func archiveExts() []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, c := range codec.Table() {
+		for _, e := range c.Extensions {
+			if !seen[e] {
+				seen[e] = true
+				out = append(out, e)
+			}
+		}
 	}
+	return out
 }
