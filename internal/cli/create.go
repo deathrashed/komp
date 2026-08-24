@@ -58,60 +58,8 @@ func init() {
 }
 
 func runRoot(cmd *cobra.Command, args []string) error {
-	if len(args) == 0 && ui.Interactive() {
-		choice, err := ui.PickCommand()
-		if err != nil {
-			return cliErr(err, 1)
-		}
-		switch choice {
-		case "compress":
-			return runCreate(cmd, args)
-		case "add":
-			archive, err := ui.PickArchive()
-			if err != nil {
-				return cliErr(err, 1)
-			}
-			return addCmd.RunE(addCmd, []string{archive})
-		case "ls":
-			archive, err := ui.PickArchive()
-			if err != nil {
-				return cliErr(err, 1)
-			}
-			return lsCmd.RunE(lsCmd, []string{archive})
-		case "un":
-			archive, err := ui.PickArchive()
-			if err != nil {
-				return cliErr(err, 1)
-			}
-			return unCmd.RunE(unCmd, []string{archive})
-		case "clean":
-			archive, err := ui.PickArchive()
-			if err != nil {
-				return cliErr(err, 1)
-			}
-			return cleanCmd.RunE(cleanCmd, []string{archive})
-		case "t":
-			archive, err := ui.PickArchive()
-			if err != nil {
-				return cliErr(err, 1)
-			}
-			return tCmd.RunE(tCmd, []string{archive})
-		case "cv":
-			archive, err := ui.PickArchive()
-			if err != nil {
-				return cliErr(err, 1)
-			}
-			return cvCmd.RunE(cvCmd, []string{archive})
-		case "img":
-			src, err := ui.PickFiles("")
-			if err != nil {
-				return cliErr(err, 1)
-			}
-			if len(src) == 0 {
-				return cliErr(errors.New("no source folder selected"), 1)
-			}
-			return imgCmd.RunE(imgCmd, []string{src[0]})
-		}
+	if len(args) == 0 && flagFormat == "" && ui.Interactive() {
+		return runInteractive(cmd)
 	}
 	return runCreate(cmd, args)
 }

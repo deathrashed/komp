@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -16,12 +17,62 @@ import (
 
 var execLook = exec.LookPath
 
+// ErrBack signals the user wants to return to the previous menu.
+var ErrBack = errors.New("back")
+
+func IsAbort(err error) bool {
+	return errors.Is(err, huh.ErrUserAborted) || errors.Is(err, ErrBack)
+}
+
 func Interactive() bool {
 	fi, err := os.Stdout.Stat()
 	if err != nil {
 		return false
 	}
 	return fi.Mode()&os.ModeCharDevice != 0
+}
+
+// Op is an interactive operation that operates on an existing archive.
+type Op string
+
+const (
+	OpAdd     Op = "add"
+	OpList    Op = "ls"
+	OpExtract Op = "un"
+	OpClean   Op = "clean"
+	OpTest    Op = "t"
+	OpConvert Op = "cv"
+)
+
+func (op Op) accepts(ext string) bool {
+	name := strings.ToLower(ext)
+	c, ok := codec.ByExtension("x" + name)
+	if !ok {
+		return isImageExt(name) && op == OpExtract
+	}
+	switch op {
+	case OpAdd:
+		return c.CanAdd()
+	case OpList:
+		return c.CanList()
+	case OpExtract:
+		return c.CanExtract() || isImageExt(name)
+	case OpClean:
+		return c.CanClean()
+	case OpTest:
+		return c.CanTest()
+	case OpConvert:
+		return c.CanExtract()
+	}
+	return false
+}
+
+func isImageExt(ext string) bool {
+	switch ext {
+	case ".dmg", ".sparseimage", ".sparsebundle", ".iso":
+		return true
+	}
+	return false
 }
 
 func PickFiles(root string) ([]string, error) {
@@ -144,67 +195,194 @@ func PickCommand() (string, error) {
 	}
 	opts := []huh.Option[string]{
 		huh.NewOption("Compress", "compress"),
-		huh.NewOption("Add to archive", "add"),
-		huh.NewOption("Peek (list contents)", "ls"),
+		huh.NewOption("Add", "add"),
+		huh.NewOption("Peek", "ls"),
 		huh.NewOption("Extract", "un"),
 		huh.NewOption("Clean", "clean"),
-		huh.NewOption("Test integrity", "t"),
+		huh.NewOption("Test", "t"),
 		huh.NewOption("Convert", "cv"),
-		huh.NewOption("Build disk image", "img"),
+		huh.NewOption("Build", "img"),
 	}
 	var choice string
 	err := huh.NewForm(huh.NewGroup(
-		huh.NewSelect[string]().Title("Select Action").Options(opts...).Value(&choice),
+		huh.NewSelect[string]().Title("Select Action").Options(opts...).Height(9).Value(&choice),
 	)).WithShowHelp(true).Run()
 	return choice, err
 }
 
-func PickArchive() (string, error) {
+// archiveOptions lists archives in dir that the op can work with.
+func archiveOptions(op Op, dir string) []huh.Option[string] {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+	var opts []huh.Option[string]
+	for _, e := range entries {
+		if e.IsDir() || strings.HasPrefix(e.Name(), ".") {
+			continue
+		}
+		if op.accepts(e.Name()) {
+			opts = append(opts, huh.NewOption(e.Name(), filepath.Join(dir, e.Name())))
+		}
+	}
+	sort.Slice(opts, func(i, j int) bool { return opts[i].Key < opts[j].Key })
+	return opts
+}
+
+// PickArchiveFor shows capability-filtered archives in the current directory,
+// with a manual-path entry at the bottom. Returns ErrBack on esc.
+func PickArchiveFor(op Op) (string, error) {
 	if !Interactive() {
 		return "", errors.New("archive picking needs a terminal")
 	}
-	archives := listArchives(".")
-	var opts []huh.Option[string]
-	for _, a := range archives {
-		opts = append(opts, huh.NewOption(a, a))
-	}
-	opts = append(opts,
-		huh.NewOption("Type path manually", "__type__"),
-	)
+	cwd, _ := os.Getwd()
+	opts := archiveOptions(op, cwd)
+	opts = append(opts, huh.NewOption("Type path manually", "__type__"))
 	var choice string
 	err := huh.NewForm(huh.NewGroup(
 		huh.NewSelect[string]().Title("Select archive").Options(opts...).Value(&choice),
 	)).WithShowHelp(true).Run()
 	if err != nil {
-		return "", err
+		return "", ErrBack
 	}
 	if choice == "__type__" {
 		var path string
-		_ = huh.NewForm(huh.NewGroup(
+		err := huh.NewForm(huh.NewGroup(
 			huh.NewInput().Title("Archive path").Value(&path).Placeholder("/path/to/archive.zip"),
 		)).WithShowHelp(true).Run()
+		if err != nil {
+			return "", ErrBack
+		}
 		return strings.TrimSpace(path), nil
 	}
 	return choice, nil
 }
 
-func PickImageSource() (string, error) {
+// PickCleanSettings is one form: archive + junk groups, previous answers stay visible.
+func PickCleanSettings() (string, []string, error) {
 	if !Interactive() {
-		return "", errors.New("source picking needs a terminal")
+		return "", nil, errors.New("interactive mode needs a terminal")
 	}
-	for {
-		files, err := runPicker("")
+	archive, groups := "", []string{}
+	archOpts := archiveOptions(OpClean, mustCwd())
+	archOpts = append(archOpts, huh.NewOption("Type path manually", "__type__"))
+	groupOpts := make([]huh.Option[string], 0, len(junk.Groups))
+	for _, g := range junk.Groups {
+		groupOpts = append(groupOpts, huh.NewOption(g, g))
+	}
+	err := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().Title("Select archive").Options(archOpts...).Value(&archive),
+		),
+		huh.NewGroup(
+			huh.NewMultiSelect[string]().Title("Junk groups to strip").Options(groupOpts...).Value(&groups),
+		),
+	).WithShowHelp(true).Run()
+	if err != nil {
+		return "", nil, ErrBack
+	}
+	if archive == "__type__" {
+		var path string
+		err := huh.NewForm(huh.NewGroup(
+			huh.NewInput().Title("Archive path").Value(&path).Placeholder("/path/to/archive.zip"),
+		)).WithShowHelp(true).Run()
 		if err != nil {
-			return "", err
+			return "", nil, ErrBack
 		}
-		for _, f := range files {
-			st, err := os.Stat(f)
-			if err == nil && st.IsDir() {
-				return f, nil
-			}
-		}
-		fmt.Fprintln(os.Stderr, "error: select a folder (not a file)")
+		archive = strings.TrimSpace(path)
 	}
+	return archive, groups, nil
+}
+
+// PickConvertSettings is one form: archive + target format (source format excluded).
+func PickConvertSettings() (string, string, error) {
+	if !Interactive() {
+		return "", "", errors.New("interactive mode needs a terminal")
+	}
+	archive, to := "", ""
+	archOpts := archiveOptions(OpConvert, mustCwd())
+	archOpts = append(archOpts, huh.NewOption("Type path manually", "__type__"))
+	err := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().Title("Select archive").Options(archOpts...).Value(&archive),
+		),
+	).WithShowHelp(true).Run()
+	if err != nil {
+		return "", "", ErrBack
+	}
+	if archive == "__type__" {
+		var path string
+		err := huh.NewForm(huh.NewGroup(
+			huh.NewInput().Title("Archive path").Value(&path).Placeholder("/path/to/archive.tar.gz"),
+		)).WithShowHelp(true).Run()
+		if err != nil {
+			return "", "", ErrBack
+		}
+		archive = strings.TrimSpace(path)
+	}
+	srcCodec, _ := codec.ByExtension(archive)
+	fmtOpts := []huh.Option[string]{}
+	for _, c := range codec.Table() {
+		if srcCodec.Name == c.Name {
+			continue
+		}
+		label := c.Name
+		if !available(c.Bin) {
+			label += "  (install: brew install " + c.BrewFormula + ")"
+		}
+		fmtOpts = append(fmtOpts, huh.NewOption(label, c.Name))
+	}
+	err = huh.NewForm(huh.NewGroup(
+		huh.NewSelect[string]().Title("Convert to").Options(fmtOpts...).Value(&to),
+	)).WithShowHelp(true).Run()
+	if err != nil {
+		return "", "", ErrBack
+	}
+	return archive, to, nil
+}
+
+// PickImageSettings is one form: source folder + image type + volume name.
+func PickImageSettings() (src, kind, volname string, err error) {
+	if !Interactive() {
+		return "", "", "", errors.New("interactive mode needs a terminal")
+	}
+	kindOpts := []huh.Option[string]{
+		huh.NewOption("dmg", "dmg"),
+		huh.NewOption("sparsebundle", "sparsebundle"),
+		huh.NewOption("sparseimage", "sparseimage"),
+		huh.NewOption("iso", "iso"),
+		huh.NewOption("pkg", "pkg"),
+	}
+	err = huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().Title("Source folder").Value(&src).Placeholder("/path/to/folder").Validate(func(s string) error {
+				if s == "" {
+					return errors.New("folder path is required")
+				}
+				st, err := os.Stat(s)
+				if err != nil {
+					return fmt.Errorf("not accessible: %v", err)
+				}
+				if !st.IsDir() {
+					return errors.New("path is not a folder")
+				}
+				return nil
+			}),
+		),
+		huh.NewGroup(
+			huh.NewSelect[string]().Title("Image type").Options(kindOpts...).Value(&kind),
+			huh.NewInput().Title("Volume name").Value(&volname).Placeholder("(defaults to folder name)"),
+		),
+	).WithShowHelp(true).Run()
+	if err != nil {
+		return "", "", "", ErrBack
+	}
+	return src, kind, strings.TrimSpace(volname), nil
+}
+
+func mustCwd() string {
+	d, _ := os.Getwd()
+	return d
 }
 
 func listArchives(dir string) []string {
@@ -223,18 +401,4 @@ func listArchives(dir string) []string {
 	}
 	sort.Strings(archives)
 	return archives
-}
-
-func archiveExts() []string {
-	seen := map[string]bool{}
-	var out []string
-	for _, c := range codec.Table() {
-		for _, e := range c.Extensions {
-			if !seen[e] {
-				seen[e] = true
-				out = append(out, e)
-			}
-		}
-	}
-	return out
 }

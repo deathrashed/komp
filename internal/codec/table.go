@@ -22,6 +22,7 @@ func Table() []Codec {
 			CreateArgs: []string{"a", "{level}", "{out}", "{in}"},
 			AddArgs:    []string{"u", "{out}", "{in}"},
 			TestArgs:   []string{"t", "{out}"}, ListArgs: []string{"l", "{out}"},
+			ExtractArgs: []string{"x", "-y", "{out}", "{dest}/"},
 			Fast: "-m1", Normal: "-m3", Max: "-m5"},
 		{Name: "zpaq", Extensions: []string{".zpaq"}, Kind: KindArchive, Bin: "zpaq", BrewFormula: "zpaq",
 			CreateArgs: []string{"add", "{out}", "{in}", "-{level}"},

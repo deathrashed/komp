@@ -154,7 +154,7 @@ func runPicker(root string) ([]string, error) {
 		}
 	}
 	m := newPickerModel(root)
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	p := tea.NewProgram(m)
 	fm, err := p.Run()
 	if err != nil {
 		return nil, err
