@@ -9,7 +9,7 @@
     <a href="https://go.dev/"><img src="https://img.shields.io/badge/go-1.27+-cf1f25?style=for-the-badge&logo=go&logoColor=fec900" alt="Go 1.27+"></a>
     <a href="https://github.com/deathrashed/komp/releases"><img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-cf1f25?style=for-the-badge&logo=apple&logoColor=fec900" alt="Platform"></a>
     <a href="https://github.com/deathrashed/komp/releases"><img src="https://img.shields.io/badge/version-v1.0.0-cf1f25?style=for-the-badge&logo=github&logoColor=fec900" alt="Version"></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/license-WTFPL-cf1f25?style=for-the-badge&logo=openaccess&logoColor=fec900" alt="WTFPL License"></a>
+    <a href="https://www.wtfpl.net/faq/"><img src="https://img.shields.io/badge/license-WTFPL-cf1f25?style=for-the-badge&logo=openaccess&logoColor=fec900" alt="WTFPL License"></a>
   </p>
 
   <p align="center">
@@ -213,4 +213,4 @@ done
 
 ## <img src="https://api.iconify.design/mdi:license.svg?color=%23fec900" height="22"> License
 
-[WTFPL](LICENSE) — see [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+[WTFPL](https://www.wtfpl.net/faq/) — Do What The Fuck You Want To Public License. Full text in [LICENSE](LICENSE); contribution guidelines in [CONTRIBUTING.md](CONTRIBUTING.md).
