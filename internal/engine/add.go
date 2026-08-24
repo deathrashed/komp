@@ -30,10 +30,24 @@ func Add(archive string, files []string) error {
 		rel, _ := filepath.Rel(stage, f)
 		members = append(members, rel)
 	}
-	args := substitute(c.AddArgs, map[string]string{"out": archive})
-	for _, a := range args {
-		_ = a
+
+	// tar uses -C indir inbase in AddArgs, which is incompatible with the generic
+	// placeholder filter used by other codecs. Build the command explicitly so
+	// members stay relative via cmd.Dir = stage.
+	if c.Name == "tar" {
+		args := []string{"-rf", archive}
+		args = append(args, members...)
+		cmd := exec.Command("tar", args...)
+		cmd.Dir = stage
+		if b, err := cmd.CombinedOutput(); err != nil {
+			return fmt.Errorf("add to %s: %w: %s", archive, err, b)
+		}
+		return nil
 	}
+
+	// zip/7z/rar add directly: their AddArgs only need {out} plus members,
+	// so we keep direct execution rather than wrapping in an extra archive layer.
+	args := substitute(c.AddArgs, map[string]string{"out": archive})
 	args = filterPlaceholders(args)
 	args = append(args, members...)
 	cmd := exec.Command(c.Bin, args...)
