@@ -304,7 +304,7 @@ func PickConvertSettings() (string, string, error) {
 	archOpts = append(archOpts, huh.NewOption("Type path manually", "__type__"))
 	err := huh.NewForm(
 		huh.NewGroup(
-			huh.NewSelect[string]().Title("Select archive").Description("Only cleanable archives are listed. esc goes back.").Options(archOpts...).Value(&archive),
+			huh.NewSelect[string]().Title("Select archive").Description("Only extractable archives are listed. esc goes back.").Options(archOpts...).Value(&archive),
 		),
 	).WithShowHelp(true).Run()
 	if err != nil {
