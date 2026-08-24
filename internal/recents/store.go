@@ -77,3 +77,7 @@ func (s *Store) save(es []Entry) error {
 	b, _ := json.MarshalIndent(es, "", "  ")
 	return os.WriteFile(s.file, b, 0o600)
 }
+
+func (s *Store) TouchQuiet(path string) {
+	_ = s.Touch(path)
+}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"komp/internal/codec"
+	"komp/internal/junk"
 	"komp/internal/recents"
 )
 
@@ -103,4 +104,19 @@ func available(bin string) bool {
 	}
 	_, err := execLook(bin)
 	return err == nil
+}
+
+func PickGroups() ([]string, error) {
+	if !Interactive() {
+		return nil, errors.New("group picking needs a terminal")
+	}
+	opts := make([]huh.Option[string], 0, len(junk.Groups))
+	for _, g := range junk.Groups {
+		opts = append(opts, huh.NewOption(g, g))
+	}
+	var chosen []string
+	err := huh.NewForm(huh.NewGroup(
+		huh.NewMultiSelect[string]().Title("Junk groups to strip").Options(opts...).Value(&chosen),
+	)).Run()
+	return chosen, err
 }
