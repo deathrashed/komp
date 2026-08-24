@@ -74,6 +74,10 @@ func Clean(archive string, groups []string) (int, error) {
 	c, ok := codec.ByExtension(archive)
 	if !ok { return 0, fmt.Errorf("unknown archive type: %s", archive) }
 
+	if err := Verify(archive); err != nil {
+		return 0, fmt.Errorf("pre-flight failed: %w", err)
+	}
+
 	lines, err := List(archive)
 	if err != nil { return 0, err }
 	members := parseMembers(archive, lines)
