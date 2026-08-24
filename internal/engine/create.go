@@ -65,7 +65,7 @@ func Create(req Request) (Result, error) {
 	if req.Separate {
 		all := Result{}
 		for _, in := range req.Inputs {
-			r, err := createSingleGroup(c, Request{Inputs: []string{in}, Format: req.Format, OutputDir: req.OutputDir, Level: req.Level, DeleteOriginals: req.DeleteOriginals, DryRun: req.DryRun})
+			r, err := createSingleGroup(c, Request{Inputs: []string{in}, Format: req.Format, OutputDir: req.OutputDir, Level: req.Level, DeleteOriginals: req.DeleteOriginals, Backup: req.Backup, DryRun: req.DryRun})
 			if err != nil {
 				return all, err
 			}
