@@ -6,10 +6,10 @@
   <p><strong>One binary for every archive on macOS — compress, extract, peek, clean, test, convert, and build disk images.</strong></p>
 
   <p>
-    <a href="https://go.dev/"><img src="https://img.shields.io/badge/go-1.27+-1e1e1e?style=for-the-badge&logo=go&logoColor=01acd7" alt="Go 1.27+"></a>
-    <a href="https://github.com/deathrashed/komp/releases"><img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-1e1e1e?style=for-the-badge&logo=apple&logoColor=01acd7" alt="Platform"></a>
-    <a href="https://github.com/deathrashed/komp/releases"><img src="https://img.shields.io/badge/version-v1.0.0-1e1e1e?style=for-the-badge&logo=github&logoColor=01acd7" alt="Version"></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1e1e1e?style=for-the-badge&logo=openaccess&logoColor=01acd7" alt="MIT License"></a>
+    <a href="https://go.dev/"><img src="https://img.shields.io/badge/go-1.27+-1e1e1e-cf1f25?style=for-the-badge&logo=go&logoColor=fec900" alt="Go 1.27+"></a>
+    <a href="https://github.com/deathrashed/komp/releases"><img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-1e1e1e-cf1f25?style=for-the-badge&logo=apple&logoColor=fec900" alt="Platform"></a>
+    <a href="https://github.com/deathrashed/komp/releases"><img src="https://img.shields.io/badge/version-v1.0.0-1e1e1e-cf1f25?style=for-the-badge&logo=github&logoColor=fec900" alt="Version"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-WTFPL-1e1e1e-cf1f25?style=for-the-badge&logo=openaccess&logoColor=fec900" alt="WTFPL License"></a>
   </p>
 
   <p>
@@ -26,13 +26,19 @@
 
 ---
 
-## <img src="https://api.iconify.design/mdi:rocket-launch-outline.svg?color=%2301acd7" height="22"> Quick Start
+## <img src="https://api.iconify.design/mdi:rocket-launch-outline.svg?color=%23cf1f25" height="22"> Quick Start
 
-**Install a prebuilt binary** (macOS Apple Silicon):
+**Install via Homebrew** (recommended):
 
 ```bash
-curl -fsSL -o komp https://github.com/deathrashed/komp/releases/latest/download/komp-darwin-arm64.tar.gz
-tar xzf komp-darwin-arm64.tar.gz
+brew install deathrashed/tap/komp
+```
+
+**Or grab a prebuilt binary:**
+
+```bash
+curl -fsSL -o komp.tar.gz https://github.com/deathrashed/komp/releases/latest/download/komp-darwin-arm64.tar.gz
+tar xzf komp.tar.gz
 sudo mv komp /usr/local/bin/
 ```
 
@@ -45,7 +51,7 @@ go install github.com/deathrashed/komp@latest
 > [!NOTE]
 > `komp` collides with nothing on macOS — no system tool or common framework uses the name, so it is safe in `$PATH`.
 
-## <img src="https://api.iconify.design/mdi:console.svg?color=%2301acd7" height="22"> Usage
+## <img src="https://api.iconify.design/mdi:console.svg?color=%23fec900" height="22"> Usage
 
 ```bash
 komp                          # interactive menu — pick an action
@@ -62,7 +68,7 @@ komp img ~/disk --type dmg    # build a disk image
 
 Run `komp` with **no arguments** in a terminal for a guided, multi-page menu — it filters archive lists to only the formats each action supports, keeps your previous answers on screen, and `esc` walks you back a page.
 
-## <img src="https://api.iconify.design/mdi:gesture-tap-button.svg?color=%2301acd7" height="22"> Commands
+## <img src="https://api.iconify.design/mdi:gesture-tap-button.svg?color=%23cf1f25" height="22"> Commands
 
 | Command | What it does |
 | --- | --- |
@@ -77,7 +83,7 @@ Run `komp` with **no arguments** in a terminal for a guided, multi-page menu —
 | `komp completions <shell>` | Generate shell completions |
 | `komp man` | Print a man page |
 
-### <img src="https://api.iconify.design/mdi:tune.svg?color=%2301acd7" height="18"> Flags
+### <img src="https://api.iconify.design/mdi:tune.svg?color=%23fec900" height="18"> Flags
 
 | Flag | Short | Default | Description |
 | --- | --- | --- | --- |
@@ -91,7 +97,7 @@ Run `komp` with **no arguments** in a terminal for a guided, multi-page menu —
 | `--dry-run` | | off | print plan, touch nothing |
 | `--backup` | | off | back up overwritten targets |
 
-## <img src="https://api.iconify.design/mdi:form-select.svg?color=%2301acd7" height="22"> Interactive Mode
+## <img src="https://api.iconify.design/mdi:form-select.svg?color=%23cf1f25" height="22"> Interactive Mode
 
 `komp` with no arguments opens a `huh`-powered flow:
 
@@ -101,7 +107,7 @@ Run `komp` with **no arguments** in a terminal for a guided, multi-page menu —
 - **esc** — returns to the previous menu, or quits from the top
 - **Spinner** — long jobs show an inline progress spinner and a macOS notification on completion
 
-## <img src="https://api.iconify.design/mdi:folder-zip-outline.svg?color=%2301acd7" height="22"> Codecs
+## <img src="https://api.iconify.design/mdi:folder-zip-outline.svg?color=%23fec900" height="22"> Codecs
 
 17 formats out of the box. Missing binaries are detected and flagged with the Homebrew formula to install.
 
@@ -124,7 +130,7 @@ Run `komp` with **no arguments** in a terminal for a guided, multi-page menu —
 
 </details>
 
-## <img src="https://api.iconify.design/mdi:broom.svg?color=%2301acd7" height="22"> Junk Cleaning
+## <img src="https://api.iconify.design/mdi:broom.svg?color=%23cf1f25" height="22"> Junk Cleaning
 
 `komp clean` strips known junk members from archives without touching the rest:
 
@@ -137,7 +143,7 @@ Run `komp` with **no arguments** in a terminal for a guided, multi-page menu —
 
 zip and 7z are cleaned in place under an atomic swap; tar-family archives are rebuilt and swapped. `--dry-run` previews, `--backup` keeps `<archive>.bak`.
 
-## <img src="https://api.iconify.design/mdi:disc.svg?color=%2301acd7" height="22"> Disk Images
+## <img src="https://api.iconify.design/mdi:disc.svg?color=%23fec900" height="22"> Disk Images
 
 ```bash
 komp img ~/app --type dmg --volname "My App"       # compressed UDZO dmg
@@ -153,7 +159,7 @@ komp img ~/pkgroot --type pkg --id com.me.tool     # macOS installer pkg
 | `iso` | `hdiutil makehybrid` | ISO + Joliet |
 | `pkg` | `pkgbuild` | requires `--id`, auto-version `1.0` |
 
-## <img src="https://api.iconify.design/mdi:exit-to-app.svg?color=%2301acd7" height="22"> Exit Codes
+## <img src="https://api.iconify.design/mdi:exit-to-app.svg?color=%23cf1f25" height="22"> Exit Codes
 
 | Code | Meaning |
 | --- | --- |
@@ -163,7 +169,7 @@ komp img ~/pkgroot --type pkg --id com.me.tool     # macOS installer pkg
 | 3 | execution error (compressor / extractor failed) |
 | 4 | integrity failure |
 
-## <img src="https://api.iconify.design/mdi:file-tree-outline.svg?color=%2301acd7" height="22"> Project Structure
+## <img src="https://api.iconify.design/mdi:file-tree-outline.svg?color=%23fec900" height="22"> Project Structure
 
 ```text
 komp/
@@ -182,7 +188,7 @@ komp/
 └── CHANGELOG.md               # release history
 ```
 
-## <img src="https://api.iconify.design/mdi:hammer-wrench.svg?color=%2301acd7" height="22"> Building
+## <img src="https://api.iconify.design/mdi:hammer-wrench.svg?color=%23cf1f25" height="22"> Building
 
 ```bash
 git clone https://github.com/deathrashed/komp
@@ -205,6 +211,6 @@ done
 
 </details>
 
-## <img src="https://api.iconify.design/mdi:license.svg?color=%2301acd7" height="22"> License
+## <img src="https://api.iconify.design/mdi:license.svg?color=%23fec900" height="22"> License
 
-[MIT](LICENSE) — see [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+[WTFPL](LICENSE) — see [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
