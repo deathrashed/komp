@@ -120,3 +120,16 @@ func PickGroups() ([]string, error) {
 	)).Run()
 	return chosen, err
 }
+
+func PickDestination(defaultVal string) (string, error) {
+	if !Interactive() {
+		return defaultVal, nil
+	}
+	var d string
+	err := huh.NewForm(huh.NewGroup(
+		huh.NewInput().Title("Destination").Value(&d).Placeholder(defaultVal),
+	)).Run()
+	if err != nil { return "", err }
+	if d == "" { return defaultVal, nil }
+	return d, nil
+}
