@@ -23,7 +23,8 @@ func List(archive string) ([]string, error) {
 	}
 	var lines []string
 	for _, l := range strings.Split(string(out), "\n") {
-		if strings.TrimSpace(l) != "" {
+		l = strings.TrimSpace(l)
+		if l != "" {
 			lines = append(lines, l)
 		}
 	}
