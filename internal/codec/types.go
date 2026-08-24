@@ -20,6 +20,7 @@ type Codec struct {
 	TestArgs    []string
 	ListArgs    []string
 	ExtractArgs []string
+	ExtractBin  string   // override for extraction; defaults to Bin
 	Fast        string // level token, e.g. "-1"
 	Normal      string
 	Max         string

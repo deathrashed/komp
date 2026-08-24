@@ -6,7 +6,7 @@ func Table() []Codec {
 			CreateArgs: []string{"-r", "{level}", "{out}", "{in}"},
 			AddArgs:    []string{"{out}", "{in}"}, DeleteArgs: []string{"-d", "{out}", "{member}"},
 			TestArgs: []string{"-T", "{out}"}, ListArgs: []string{"-sf", "{out}"},
-			ExtractArgs: []string{"{out}", "-d", "{dest}"}, Fast: "-1", Normal: "-6", Max: "-9"},
+			ExtractBin: "unzip", ExtractArgs: []string{"{out}", "-d", "{dest}"}, Fast: "-1", Normal: "-6", Max: "-9"},
 		{Name: "7z", Extensions: []string{".7z"}, Kind: KindArchive, Bin: "7z", BrewFormula: "sevenzip",
 			CreateArgs: []string{"a", "{level}", "{out}", "{in}"},
 			AddArgs:    []string{"u", "{out}", "{in}"}, DeleteArgs: []string{"d", "{out}", "{member}"},
