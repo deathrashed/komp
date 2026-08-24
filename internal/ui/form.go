@@ -20,6 +20,11 @@ var execLook = exec.LookPath
 // ErrBack signals the user wants to return to the previous menu.
 var ErrBack = errors.New("back")
 
+const (
+	choiceBack = "__back__"
+	choiceType = "__type__"
+)
+
 func IsAbort(err error) bool {
 	return errors.Is(err, huh.ErrUserAborted) || errors.Is(err, ErrBack)
 }
@@ -87,14 +92,18 @@ func PickFormat() (string, error) {
 	for _, c := range codec.Table() {
 		label := c.Name
 		if !available(c.Bin) {
-			label += "  (install: brew install " + c.BrewFormula + ")"
+			label += "  (not installed"
+			if c.BrewFormula != "" {
+				label += " — brew install " + c.BrewFormula
+			}
+			label += ")"
 		}
 		opts = append(opts, huh.NewOption(label, c.Name))
 	}
 	var choice string
-	err := huh.NewForm(huh.NewGroup(
+	err := newForm(huh.NewGroup(
 		huh.NewSelect[string]().Title("Format").Options(opts...).Value(&choice),
-	)).WithShowHelp(true).Run()
+	)).Run()
 	return choice, err
 }
 
@@ -111,9 +120,9 @@ func PickRecent(entries []recents.Entry) (string, error) {
 		opts = append(opts, huh.NewOption(label, e.Path))
 	}
 	var choice string
-	err := huh.NewForm(huh.NewGroup(
+	err := newForm(huh.NewGroup(
 		huh.NewSelect[string]().Title("Recent archives").Options(opts...).Value(&choice),
-	)).WithShowHelp(true).Run()
+	)).Run()
 	return choice, err
 }
 
@@ -145,7 +154,9 @@ func PickExistingArchive() (string, error) {
 
 func ConfirmDelete() bool {
 	v := false
-	_ = huh.NewConfirm().Title("Delete originals after compressing?").Value(&v).Run()
+	_ = newForm(huh.NewGroup(
+		huh.NewConfirm().Title("Delete originals?").Description("Remove the source files after the archive is written.").Value(&v),
+	)).Run()
 	return v
 }
 
@@ -161,14 +172,14 @@ func PickGroups() ([]string, error) {
 	if !Interactive() {
 		return nil, errors.New("group picking needs a terminal")
 	}
-	opts := make([]huh.Option[string], 0, len(junk.Groups))
+	groupOpts := make([]huh.Option[string], 0, len(junk.Groups))
 	for _, g := range junk.Groups {
-		opts = append(opts, huh.NewOption(g, g))
+		groupOpts = append(groupOpts, huh.NewOption(g, g))
 	}
 	var chosen []string
-	err := huh.NewForm(huh.NewGroup(
-		huh.NewMultiSelect[string]().Title("Junk groups to strip").Options(opts...).Value(&chosen),
-	)).WithShowHelp(true).Run()
+	err := newForm(huh.NewGroup(
+		huh.NewMultiSelect[string]().Title("Junk groups to strip").Description("Members matching these patterns will be removed.").Options(groupOpts...).Value(&chosen),
+	)).Run()
 	return chosen, err
 }
 
@@ -177,9 +188,9 @@ func PickDestination(defaultVal string) (string, error) {
 		return defaultVal, nil
 	}
 	var d string
-	err := huh.NewForm(huh.NewGroup(
-		huh.NewInput().Title("Destination").Value(&d).Placeholder(defaultVal),
-	)).WithShowHelp(true).Run()
+	err := newForm(huh.NewGroup(
+		huh.NewInput().Title("Destination").Description("Where extracted files go.").Value(&d).Placeholder(defaultVal),
+	)).Run()
 	if err != nil {
 		return "", err
 	}
@@ -202,11 +213,12 @@ func PickCommand() (string, error) {
 		huh.NewOption("Test", "t"),
 		huh.NewOption("Convert", "cv"),
 		huh.NewOption("Build", "img"),
+		huh.NewOption("Quit", "__quit__"),
 	}
 	var choice string
-	err := huh.NewForm(huh.NewGroup(
-		huh.NewSelect[string]().Title("Select Action").Description("Choose what komp should do. esc quits.").Options(opts...).Height(9).Value(&choice),
-	)).WithShowHelp(true).Run()
+	err := newForm(huh.NewGroup(
+		huh.NewSelect[string]().Title("Select Action").Options(opts...).Value(&choice),
+	)).Run()
 	return choice, err
 }
 
@@ -229,67 +241,81 @@ func archiveOptions(op Op, dir string) []huh.Option[string] {
 	return opts
 }
 
-// PickArchiveFor shows capability-filtered archives in the current directory,
-// with a manual-path entry at the bottom. Returns ErrBack on esc.
+// PickArchiveFor shows capability-filtered archives in the current directory.
+// Returns ErrBack when the user backs out.
 func PickArchiveFor(op Op) (string, error) {
 	if !Interactive() {
 		return "", errors.New("archive picking needs a terminal")
 	}
 	cwd, _ := os.Getwd()
 	opts := archiveOptions(op, cwd)
-	opts = append(opts, huh.NewOption("Type path manually", "__type__"))
+	opts = append(opts,
+		huh.NewOption("Type path manually", choiceType),
+		huh.NewOption("< Back", choiceBack),
+	)
 	var choice string
-	err := huh.NewForm(huh.NewGroup(
-		huh.NewSelect[string]().Title("Select archive").Description("Only archives this action supports are listed. esc goes back.").Options(opts...).Value(&choice),
-	)).WithShowHelp(true).Run()
+	err := newForm(huh.NewGroup(
+		huh.NewSelect[string]().Title("Select archive").Description(fmt.Sprintf("In %s", cwd)).Options(opts...).Value(&choice),
+	)).Run()
 	if err != nil {
 		return "", ErrBack
 	}
-	if choice == "__type__" {
-		var path string
-		err := huh.NewForm(huh.NewGroup(
-			huh.NewInput().Title("Archive path").Description("Full path to the archive. esc goes back.").Value(&path).Placeholder("/path/to/archive.zip"),
-		)).WithShowHelp(true).Run()
-		if err != nil {
-			return "", ErrBack
-		}
-		return strings.TrimSpace(path), nil
+	switch choice {
+	case choiceBack:
+		return "", ErrBack
+	case choiceType:
+		return pickArchivePath()
+	default:
+		return choice, nil
 	}
-	return choice, nil
 }
 
-// PickCleanSettings is one form: archive + junk groups, previous answers stay visible.
+func pickArchivePath() (string, error) {
+	var path string
+	err := newForm(huh.NewGroup(
+		huh.NewInput().Title("Archive path").Description("Absolute or relative path.").Value(&path).Placeholder("/path/to/archive.zip"),
+	)).Run()
+	if err != nil {
+		return "", ErrBack
+	}
+	return strings.TrimSpace(path), nil
+}
+
+// PickCleanSettings is one form: archive + junk groups, prior answers stay visible.
 func PickCleanSettings() (string, []string, error) {
 	if !Interactive() {
 		return "", nil, errors.New("interactive mode needs a terminal")
 	}
 	archive, groups := "", []string{}
-	archOpts := archiveOptions(OpClean, mustCwd())
-	archOpts = append(archOpts, huh.NewOption("Type path manually", "__type__"))
+	cwd, _ := os.Getwd()
+	archOpts := archiveOptions(OpClean, cwd)
+	archOpts = append(archOpts,
+		huh.NewOption("Type path manually", choiceType),
+		huh.NewOption("< Back", choiceBack),
+	)
 	groupOpts := make([]huh.Option[string], 0, len(junk.Groups))
 	for _, g := range junk.Groups {
 		groupOpts = append(groupOpts, huh.NewOption(g, g))
 	}
-	err := huh.NewForm(
+	err := newForm(
 		huh.NewGroup(
-			huh.NewSelect[string]().Title("Select archive").Description("Only cleanable archives are listed. esc goes back.").Options(archOpts...).Value(&archive),
+			huh.NewSelect[string]().Title("Select archive").Description(fmt.Sprintf("In %s", cwd)).Options(archOpts...).Value(&archive),
 		),
 		huh.NewGroup(
-			huh.NewMultiSelect[string]().Title("Junk groups to strip").Description("space toggles, enter submits, esc goes back.").Options(groupOpts...).Value(&groups),
+			huh.NewMultiSelect[string]().Title("Junk groups to strip").Description("Members matching these patterns will be removed.").Options(groupOpts...).Value(&groups),
 		),
-	).WithShowHelp(true).Run()
+	).Run()
 	if err != nil {
 		return "", nil, ErrBack
 	}
-	if archive == "__type__" {
-		var path string
-		err := huh.NewForm(huh.NewGroup(
-			huh.NewInput().Title("Archive path").Description("Full path to the archive. esc goes back.").Value(&path).Placeholder("/path/to/archive.zip"),
-		)).WithShowHelp(true).Run()
+	if archive == choiceBack {
+		return "", nil, ErrBack
+	}
+	if archive == choiceType {
+		archive, err = pickArchivePath()
 		if err != nil {
-			return "", nil, ErrBack
+			return "", nil, err
 		}
-		archive = strings.TrimSpace(path)
 	}
 	return archive, groups, nil
 }
@@ -300,25 +326,28 @@ func PickConvertSettings() (string, string, error) {
 		return "", "", errors.New("interactive mode needs a terminal")
 	}
 	archive, to := "", ""
-	archOpts := archiveOptions(OpConvert, mustCwd())
-	archOpts = append(archOpts, huh.NewOption("Type path manually", "__type__"))
-	err := huh.NewForm(
+	cwd, _ := os.Getwd()
+	archOpts := archiveOptions(OpConvert, cwd)
+	archOpts = append(archOpts,
+		huh.NewOption("Type path manually", choiceType),
+		huh.NewOption("< Back", choiceBack),
+	)
+	err := newForm(
 		huh.NewGroup(
-			huh.NewSelect[string]().Title("Select archive").Description("Only extractable archives are listed. esc goes back.").Options(archOpts...).Value(&archive),
+			huh.NewSelect[string]().Title("Select archive").Description(fmt.Sprintf("In %s", cwd)).Options(archOpts...).Value(&archive),
 		),
-	).WithShowHelp(true).Run()
+	).Run()
 	if err != nil {
 		return "", "", ErrBack
 	}
-	if archive == "__type__" {
-		var path string
-		err := huh.NewForm(huh.NewGroup(
-			huh.NewInput().Title("Archive path").Description("Full path to the archive. esc goes back.").Value(&path).Placeholder("/path/to/archive.tar.gz"),
-		)).WithShowHelp(true).Run()
+	if archive == choiceBack {
+		return "", "", ErrBack
+	}
+	if archive == choiceType {
+		archive, err = pickArchivePath()
 		if err != nil {
-			return "", "", ErrBack
+			return "", "", err
 		}
-		archive = strings.TrimSpace(path)
 	}
 	srcCodec, _ := codec.ByExtension(archive)
 	fmtOpts := []huh.Option[string]{}
@@ -328,20 +357,20 @@ func PickConvertSettings() (string, string, error) {
 		}
 		label := c.Name
 		if !available(c.Bin) {
-			label += "  (install: brew install " + c.BrewFormula + ")"
+			label += "  (not installed)"
 		}
 		fmtOpts = append(fmtOpts, huh.NewOption(label, c.Name))
 	}
-	err = huh.NewForm(huh.NewGroup(
-		huh.NewSelect[string]().Title("Convert to").Description("Target format. esc goes back.").Options(fmtOpts...).Value(&to),
-	)).WithShowHelp(true).Run()
+	err = newForm(huh.NewGroup(
+		huh.NewSelect[string]().Title("Convert to").Description("Target format.").Options(fmtOpts...).Value(&to),
+	)).Run()
 	if err != nil {
 		return "", "", ErrBack
 	}
 	return archive, to, nil
 }
 
-// PickImageSettings is one form: source folder + image type + volume name.
+// PickImageSettings is one form: image type, source folder, volume name.
 func PickImageSettings() (src, kind, volname string, err error) {
 	if !Interactive() {
 		return "", "", "", errors.New("interactive mode needs a terminal")
@@ -353,9 +382,12 @@ func PickImageSettings() (src, kind, volname string, err error) {
 		huh.NewOption("iso", "iso"),
 		huh.NewOption("pkg", "pkg"),
 	}
-	err = huh.NewForm(
+	err = newForm(
 		huh.NewGroup(
-			huh.NewInput().Title("Source folder").Description("Folder to build the image from. esc goes back.").Value(&src).Placeholder("/path/to/folder").Validate(func(s string) error {
+			huh.NewSelect[string]().Title("Image type").Description("Disk image format.").Options(kindOpts...).Value(&kind),
+		),
+		huh.NewGroup(
+			huh.NewInput().Title("Source folder").Description("Folder to build the image from.").Value(&src).Placeholder("/path/to/folder").Validate(func(s string) error {
 				if s == "" {
 					return errors.New("folder path is required")
 				}
@@ -368,37 +400,11 @@ func PickImageSettings() (src, kind, volname string, err error) {
 				}
 				return nil
 			}),
+			huh.NewInput().Title("Volume name").Description("Name shown when the image mounts.").Value(&volname).Placeholder("(defaults to folder name)"),
 		),
-		huh.NewGroup(
-			huh.NewSelect[string]().Title("Image type").Description("esc goes back.").Options(kindOpts...).Value(&kind),
-			huh.NewInput().Title("Volume name").Description("Shown when the image is mounted.").Value(&volname).Placeholder("(defaults to folder name)"),
-		),
-	).WithShowHelp(true).Run()
+	).Run()
 	if err != nil {
 		return "", "", "", ErrBack
 	}
 	return src, kind, strings.TrimSpace(volname), nil
-}
-
-func mustCwd() string {
-	d, _ := os.Getwd()
-	return d
-}
-
-func listArchives(dir string) []string {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil
-	}
-	var archives []string
-	for _, e := range entries {
-		if e.IsDir() {
-			continue
-		}
-		if _, ok := codec.ByExtension(e.Name()); ok {
-			archives = append(archives, e.Name())
-		}
-	}
-	sort.Strings(archives)
-	return archives
 }

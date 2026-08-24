@@ -2,6 +2,7 @@ package cli
 
 import (
 	"errors"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -86,12 +87,20 @@ func dispatchInteractive(cmd *cobra.Command, action string) error {
 		if err := imgCmd.Flags().Set("type", kind); err != nil {
 			return cliErr(err, 1)
 		}
-		if volname != "" {
-			if err := imgCmd.Flags().Set("volname", volname); err != nil {
+		if volname == "" {
+			volname = strings.TrimSuffix(filepath.Base(src), filepath.Ext(src))
+		}
+		if err := imgCmd.Flags().Set("volname", volname); err != nil {
+			return cliErr(err, 1)
+		}
+		if kind == "pkg" {
+			if err := imgCmd.Flags().Set("id", "com.komp."+strings.ToLower(strings.ReplaceAll(volname, " ", "-"))); err != nil {
 				return cliErr(err, 1)
 			}
 		}
 		return imgCmd.RunE(imgCmd, []string{src})
+	case "__quit__":
+		return nil
 	}
 	return nil
 }

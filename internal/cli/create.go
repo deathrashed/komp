@@ -104,9 +104,14 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	if !flagDelete && ui.Interactive() && flagFormat == "" {
 		flagDelete = ui.ConfirmDelete() // only prompt when format wasn't preset
 	}
-	res, err := engine.Create(engine.Request{
-		Inputs: files, Format: format, OutputDir: flagOut, DeleteOriginals: flagDelete,
-		Separate: flagSep, Each: flagEach, Level: flagLevel, Backup: flagBackup, DryRun: flagDryRun,
+	var res engine.Result
+	err := ui.RunWithSpinner("Compressing...", func() error {
+		var e error
+		res, e = engine.Create(engine.Request{
+			Inputs: files, Format: format, OutputDir: flagOut, DeleteOriginals: flagDelete,
+			Separate: flagSep, Each: flagEach, Level: flagLevel, Backup: flagBackup, DryRun: flagDryRun,
+		})
+		return e
 	})
 	if err != nil {
 		return cliErr(err, classify(err))
