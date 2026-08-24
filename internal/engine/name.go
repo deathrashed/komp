@@ -33,13 +33,21 @@ func OutputName(input, outDir, ext string) string {
 // kindIsArchive reports whether ext names a container codec. Unknown
 // extensions (e.g. a synthesized "tar.gz") are treated as archives, which
 // only matters when the input itself has an extension.
+//
+// ext is normalized at entry: lower-cased and leading "." stripped, so
+// ".GZ", "gz", "Gz" all resolve consistently. ByName is already
+// case-insensitive; the fallback extension scan also uses EqualFold to
+// stay consistent. The manual scan is kept (instead of codec.ByExtension)
+// because ByExtension expects a full path/filename and matches via
+// HasSuffix — a bare stem like "gz" would not match ".gz".
 func kindIsArchive(ext string) bool {
+	ext = strings.TrimPrefix(strings.ToLower(ext), ".")
 	if c, ok := codec.ByName(ext); ok {
 		return c.Kind == codec.KindArchive
 	}
 	for _, c := range codec.Table() {
 		for _, e := range c.Extensions {
-			if strings.TrimPrefix(e, ".") == ext && c.Kind != codec.KindArchive {
+			if strings.EqualFold(strings.TrimPrefix(e, "."), ext) && c.Kind != codec.KindArchive {
 				return false
 			}
 		}
