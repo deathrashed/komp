@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/charmbracelet/huh"
 	"komp/internal/codec"
@@ -25,22 +24,7 @@ func PickFiles(root string) ([]string, error) {
 	if !Interactive() {
 		return nil, errors.New("file picking needs a terminal — pass paths as arguments")
 	}
-	_ = root
-	var raw string
-	if err := huh.NewForm(
-		huh.NewGroup(huh.NewText().
-			Title("Files to compress (one path per line)").
-			Value(&raw)),
-	).Run(); err != nil {
-		return nil, err
-	}
-	var out []string
-	for _, l := range strings.Split(raw, "\n") {
-		if l = strings.TrimSpace(l); l != "" {
-			out = append(out, l)
-		}
-	}
-	return out, nil
+	return runPicker(root)
 }
 
 func PickFormat() (string, error) {
