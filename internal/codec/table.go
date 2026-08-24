@@ -28,7 +28,7 @@ func Table() []Codec {
 			AddArgs:    []string{"add", "{out}", "{in}"},
 			TestArgs:   []string{"x", "{out}", "-test"},
 			ListArgs:   []string{"l", "{out}"}, Fast: "1", Normal: "5", Max: "9"},
-		{Name: "aar", Extensions: []string{".aar"}, Kind: KindArchive, Bin: "aar", BrewFormula: "aar",
+		{Name: "aar", Extensions: []string{".aar"}, Kind: KindArchive, Bin: "aar", BrewFormula: "",
 			CreateArgs: []string{"c", "{out}", "{in}"},
 			TestArgs:   []string{"t", "{out}"}, ListArgs: []string{"l", "{out}"}},
 		{Name: "gzip", Extensions: []string{".gz", ".tgz"}, Kind: KindStream, Bin: "gzip", BrewFormula: "",

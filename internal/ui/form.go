@@ -133,3 +133,48 @@ func PickDestination(defaultVal string) (string, error) {
 	if d == "" { return defaultVal, nil }
 	return d, nil
 }
+
+func PickCommand() (string, error) {
+	if !Interactive() {
+		return "", errors.New("command picking needs a terminal")
+	}
+	opts := []huh.Option[string]{
+		huh.NewOption("Compress files", "compress"),
+		huh.NewOption("Add to archive", "add"),
+		huh.NewOption("List archive", "ls"),
+		huh.NewOption("Extract archive", "un"),
+		huh.NewOption("Clean archive", "clean"),
+		huh.NewOption("Test archive", "t"),
+		huh.NewOption("Convert archive", "cv"),
+		huh.NewOption("Build disk image", "img"),
+	}
+	var choice string
+	err := huh.NewForm(huh.NewGroup(
+		huh.NewSelect[string]().Title("What do you want to do?").Options(opts...).Value(&choice),
+	)).Run()
+	return choice, err
+}
+
+func PickArchive() (string, error) {
+	if !Interactive() {
+		return "", errors.New("archive picking needs a terminal")
+	}
+	files, err := runPicker("")
+	if err != nil {
+		return "", err
+	}
+	var valid []string
+	for _, f := range files {
+		if _, ok := codec.ByExtension(f); ok {
+			valid = append(valid, f)
+		}
+	}
+	switch len(valid) {
+	case 1:
+		return valid[0], nil
+	case 0:
+		return "", errors.New("no valid archive selected — pick a zip, 7z, tar, etc.")
+	default:
+		return "", errors.New("select exactly one archive file")
+	}
+}
