@@ -1,18 +1,18 @@
 <div align="center">
   <img src="assets/icon.png" alt="komp" width="200">
 
-  <h1>KOMP</h1>
+  <h1 align="center">KOMP</h1>
 
-  <p><strong>One binary for every archive on macOS — compress, extract, peek, clean, test, convert, and build disk images.</strong></p>
+  <p align="center"><strong>One binary for every archive on macOS — compress, extract, peek, clean, test, convert, and build disk images.</strong></p>
 
-  <p>
-    <a href="https://go.dev/"><img src="https://img.shields.io/badge/go-1.27+-1e1e1e-cf1f25?style=for-the-badge&logo=go&logoColor=fec900" alt="Go 1.27+"></a>
-    <a href="https://github.com/deathrashed/komp/releases"><img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-1e1e1e-cf1f25?style=for-the-badge&logo=apple&logoColor=fec900" alt="Platform"></a>
-    <a href="https://github.com/deathrashed/komp/releases"><img src="https://img.shields.io/badge/version-v1.0.0-1e1e1e-cf1f25?style=for-the-badge&logo=github&logoColor=fec900" alt="Version"></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/license-WTFPL-1e1e1e-cf1f25?style=for-the-badge&logo=openaccess&logoColor=fec900" alt="WTFPL License"></a>
+  <p align="center">
+    <a href="https://go.dev/"><img src="https://img.shields.io/badge/go-1.27+-cf1f25?style=for-the-badge&logo=go&logoColor=fec900" alt="Go 1.27+"></a>
+    <a href="https://github.com/deathrashed/komp/releases"><img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-cf1f25?style=for-the-badge&logo=apple&logoColor=fec900" alt="Platform"></a>
+    <a href="https://github.com/deathrashed/komp/releases"><img src="https://img.shields.io/badge/version-v1.0.0-cf1f25?style=for-the-badge&logo=github&logoColor=fec900" alt="Version"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-WTFPL-cf1f25?style=for-the-badge&logo=openaccess&logoColor=fec900" alt="WTFPL License"></a>
   </p>
 
-  <p>
+  <p align="center">
     <a href="#quick-start">Quick Start</a> |
     <a href="#usage">Usage</a> |
     <a href="#commands">Commands</a> |
