@@ -48,10 +48,10 @@ var addCmd = &cobra.Command{
 				if !ui.Interactive() {
 					return cliErr(errors.New("pass an archive path"), 1)
 				}
-				archive, err = ui.PickExistingArchive()
-				if err != nil {
-					return cliErr(err, 1)
-				}
+			archive, err = ui.PickArchive()
+			if err != nil {
+				return cliErr(err, 1)
+			}
 			} else {
 				archive = args[0]
 			}

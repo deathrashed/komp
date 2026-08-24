@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"strings"
 
 	"github.com/charmbracelet/huh"
 	"komp/internal/codec"
@@ -37,13 +38,12 @@ func PickFormat() (string, error) {
 		if !available(c.Bin) {
 			label += "  (install: brew install " + c.BrewFormula + ")"
 		}
-		o := huh.NewOption(label, c.Name)
-		opts = append(opts, o)
+		opts = append(opts, huh.NewOption(label, c.Name))
 	}
 	var choice string
 	err := huh.NewForm(huh.NewGroup(
 		huh.NewSelect[string]().Title("Format").Options(opts...).Value(&choice),
-	)).Run()
+	)).WithShowHelp(true).Run()
 	return choice, err
 }
 
@@ -62,7 +62,7 @@ func PickRecent(entries []recents.Entry) (string, error) {
 	var choice string
 	err := huh.NewForm(huh.NewGroup(
 		huh.NewSelect[string]().Title("Recent archives").Options(opts...).Value(&choice),
-	)).Run()
+	)).WithShowHelp(true).Run()
 	return choice, err
 }
 
@@ -117,7 +117,7 @@ func PickGroups() ([]string, error) {
 	var chosen []string
 	err := huh.NewForm(huh.NewGroup(
 		huh.NewMultiSelect[string]().Title("Junk groups to strip").Options(opts...).Value(&chosen),
-	)).Run()
+	)).WithShowHelp(true).Run()
 	return chosen, err
 }
 
@@ -128,7 +128,7 @@ func PickDestination(defaultVal string) (string, error) {
 	var d string
 	err := huh.NewForm(huh.NewGroup(
 		huh.NewInput().Title("Destination").Value(&d).Placeholder(defaultVal),
-	)).Run()
+	)).WithShowHelp(true).Run()
 	if err != nil {
 		return "", err
 	}
@@ -143,19 +143,19 @@ func PickCommand() (string, error) {
 		return "", errors.New("command picking needs a terminal")
 	}
 	opts := []huh.Option[string]{
-		huh.NewOption("Compress files", "compress"),
+		huh.NewOption("Compress", "compress"),
 		huh.NewOption("Add to archive", "add"),
-		huh.NewOption("List archive", "ls"),
-		huh.NewOption("Extract archive", "un"),
-		huh.NewOption("Clean archive", "clean"),
-		huh.NewOption("Test archive", "t"),
-		huh.NewOption("Convert archive", "cv"),
+		huh.NewOption("Peek (list contents)", "ls"),
+		huh.NewOption("Extract", "un"),
+		huh.NewOption("Clean", "clean"),
+		huh.NewOption("Test integrity", "t"),
+		huh.NewOption("Convert", "cv"),
 		huh.NewOption("Build disk image", "img"),
 	}
 	var choice string
 	err := huh.NewForm(huh.NewGroup(
-		huh.NewSelect[string]().Title("What do you want to do?").Options(opts...).Value(&choice),
-	)).Run()
+		huh.NewSelect[string]().Title("Select Action").Options(opts...).Value(&choice),
+	)).WithShowHelp(true).Run()
 	return choice, err
 }
 
@@ -164,37 +164,28 @@ func PickArchive() (string, error) {
 		return "", errors.New("archive picking needs a terminal")
 	}
 	archives := listArchives(".")
-	opts := make([]huh.Option[string], 0, len(archives)+2)
+	var opts []huh.Option[string]
 	for _, a := range archives {
 		opts = append(opts, huh.NewOption(a, a))
 	}
 	opts = append(opts,
-		huh.NewOption("📁 Browse for file...", "__browse__"),
-		huh.NewOption("✏️  Type path manually...", "__type__"),
+		huh.NewOption("Type path manually", "__type__"),
 	)
 	var choice string
 	err := huh.NewForm(huh.NewGroup(
 		huh.NewSelect[string]().Title("Select archive").Options(opts...).Value(&choice),
-	)).Run()
+	)).WithShowHelp(true).Run()
 	if err != nil {
 		return "", err
 	}
-	switch choice {
-	case "__browse__":
-		var path string
-		_ = huh.NewForm(huh.NewGroup(
-			huh.NewFilePicker().Title("Select archive").AllowedTypes(archiveExts()).Value(&path),
-		)).Run()
-		return path, err
-	case "__type__":
+	if choice == "__type__" {
 		var path string
 		_ = huh.NewForm(huh.NewGroup(
 			huh.NewInput().Title("Archive path").Value(&path).Placeholder("/path/to/archive.zip"),
-		)).Run()
-		return path, err
-	default:
-		return choice, nil
+		)).WithShowHelp(true).Run()
+		return strings.TrimSpace(path), nil
 	}
+	return choice, nil
 }
 
 func PickImageSource() (string, error) {

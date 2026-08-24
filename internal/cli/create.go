@@ -67,7 +67,7 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		case "compress":
 			return runCreate(cmd, args)
 		case "add":
-			archive, err := ui.PickExistingArchive()
+			archive, err := ui.PickArchive()
 			if err != nil {
 				return cliErr(err, 1)
 			}
