@@ -205,7 +205,7 @@ func PickCommand() (string, error) {
 	}
 	var choice string
 	err := huh.NewForm(huh.NewGroup(
-		huh.NewSelect[string]().Title("Select Action").Options(opts...).Height(9).Value(&choice),
+		huh.NewSelect[string]().Title("Select Action").Description("Choose what komp should do. esc quits.").Options(opts...).Height(9).Value(&choice),
 	)).WithShowHelp(true).Run()
 	return choice, err
 }
@@ -240,7 +240,7 @@ func PickArchiveFor(op Op) (string, error) {
 	opts = append(opts, huh.NewOption("Type path manually", "__type__"))
 	var choice string
 	err := huh.NewForm(huh.NewGroup(
-		huh.NewSelect[string]().Title("Select archive").Options(opts...).Value(&choice),
+		huh.NewSelect[string]().Title("Select archive").Description("Only archives this action supports are listed. esc goes back.").Options(opts...).Value(&choice),
 	)).WithShowHelp(true).Run()
 	if err != nil {
 		return "", ErrBack
@@ -248,7 +248,7 @@ func PickArchiveFor(op Op) (string, error) {
 	if choice == "__type__" {
 		var path string
 		err := huh.NewForm(huh.NewGroup(
-			huh.NewInput().Title("Archive path").Value(&path).Placeholder("/path/to/archive.zip"),
+			huh.NewInput().Title("Archive path").Description("Full path to the archive. esc goes back.").Value(&path).Placeholder("/path/to/archive.zip"),
 		)).WithShowHelp(true).Run()
 		if err != nil {
 			return "", ErrBack
@@ -272,10 +272,10 @@ func PickCleanSettings() (string, []string, error) {
 	}
 	err := huh.NewForm(
 		huh.NewGroup(
-			huh.NewSelect[string]().Title("Select archive").Options(archOpts...).Value(&archive),
+			huh.NewSelect[string]().Title("Select archive").Description("Only cleanable archives are listed. esc goes back.").Options(archOpts...).Value(&archive),
 		),
 		huh.NewGroup(
-			huh.NewMultiSelect[string]().Title("Junk groups to strip").Options(groupOpts...).Value(&groups),
+			huh.NewMultiSelect[string]().Title("Junk groups to strip").Description("space toggles, enter submits, esc goes back.").Options(groupOpts...).Value(&groups),
 		),
 	).WithShowHelp(true).Run()
 	if err != nil {
@@ -284,7 +284,7 @@ func PickCleanSettings() (string, []string, error) {
 	if archive == "__type__" {
 		var path string
 		err := huh.NewForm(huh.NewGroup(
-			huh.NewInput().Title("Archive path").Value(&path).Placeholder("/path/to/archive.zip"),
+			huh.NewInput().Title("Archive path").Description("Full path to the archive. esc goes back.").Value(&path).Placeholder("/path/to/archive.zip"),
 		)).WithShowHelp(true).Run()
 		if err != nil {
 			return "", nil, ErrBack
@@ -304,7 +304,7 @@ func PickConvertSettings() (string, string, error) {
 	archOpts = append(archOpts, huh.NewOption("Type path manually", "__type__"))
 	err := huh.NewForm(
 		huh.NewGroup(
-			huh.NewSelect[string]().Title("Select archive").Options(archOpts...).Value(&archive),
+			huh.NewSelect[string]().Title("Select archive").Description("Only cleanable archives are listed. esc goes back.").Options(archOpts...).Value(&archive),
 		),
 	).WithShowHelp(true).Run()
 	if err != nil {
@@ -313,7 +313,7 @@ func PickConvertSettings() (string, string, error) {
 	if archive == "__type__" {
 		var path string
 		err := huh.NewForm(huh.NewGroup(
-			huh.NewInput().Title("Archive path").Value(&path).Placeholder("/path/to/archive.tar.gz"),
+			huh.NewInput().Title("Archive path").Description("Full path to the archive. esc goes back.").Value(&path).Placeholder("/path/to/archive.tar.gz"),
 		)).WithShowHelp(true).Run()
 		if err != nil {
 			return "", "", ErrBack
@@ -333,7 +333,7 @@ func PickConvertSettings() (string, string, error) {
 		fmtOpts = append(fmtOpts, huh.NewOption(label, c.Name))
 	}
 	err = huh.NewForm(huh.NewGroup(
-		huh.NewSelect[string]().Title("Convert to").Options(fmtOpts...).Value(&to),
+		huh.NewSelect[string]().Title("Convert to").Description("Target format. esc goes back.").Options(fmtOpts...).Value(&to),
 	)).WithShowHelp(true).Run()
 	if err != nil {
 		return "", "", ErrBack
@@ -355,7 +355,7 @@ func PickImageSettings() (src, kind, volname string, err error) {
 	}
 	err = huh.NewForm(
 		huh.NewGroup(
-			huh.NewInput().Title("Source folder").Value(&src).Placeholder("/path/to/folder").Validate(func(s string) error {
+			huh.NewInput().Title("Source folder").Description("Folder to build the image from. esc goes back.").Value(&src).Placeholder("/path/to/folder").Validate(func(s string) error {
 				if s == "" {
 					return errors.New("folder path is required")
 				}
@@ -370,8 +370,8 @@ func PickImageSettings() (src, kind, volname string, err error) {
 			}),
 		),
 		huh.NewGroup(
-			huh.NewSelect[string]().Title("Image type").Options(kindOpts...).Value(&kind),
-			huh.NewInput().Title("Volume name").Value(&volname).Placeholder("(defaults to folder name)"),
+			huh.NewSelect[string]().Title("Image type").Description("esc goes back.").Options(kindOpts...).Value(&kind),
+			huh.NewInput().Title("Volume name").Description("Shown when the image is mounted.").Value(&volname).Placeholder("(defaults to folder name)"),
 		),
 	).WithShowHelp(true).Run()
 	if err != nil {
