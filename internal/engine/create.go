@@ -62,10 +62,87 @@ func Create(req Request) (Result, error) {
 	if _, err := exec.LookPath(c.Bin); err != nil {
 		return Result{}, fmt.Errorf("%s not installed — brew install %s", c.Bin, c.BrewFormula)
 	}
+	if req.Separate {
+		all := Result{}
+		for _, in := range req.Inputs {
+			r, err := createSingleGroup(c, Request{Inputs: []string{in}, Format: req.Format, OutputDir: req.OutputDir, Level: req.Level, DeleteOriginals: req.DeleteOriginals, DryRun: req.DryRun})
+			if err != nil {
+				return all, err
+			}
+			all.Outputs = append(all.Outputs, r.Outputs...)
+			all.Plans = append(all.Plans, r.Plans...)
+		}
+		return all, nil
+	}
+	if c.Kind == codec.KindArchive {
+		return createSingleGroup(c, req)
+	}
 	if len(req.Inputs) > 1 && c.Kind == codec.KindStream && !req.Each {
 		return createWrapped(c, req)
 	}
 	return createDirect(c, req)
+}
+
+func createSingleGroup(c codec.Codec, req Request) (Result, error) {
+	if len(req.Inputs) == 1 && c.Kind == codec.KindStream {
+		return createDirect(c, req)
+	}
+	first := req.Inputs[0]
+	ext := strings.TrimPrefix(c.Extensions[0], ".")
+	out := OutputName(first, req.OutputDir, ext)
+	if req.DryRun {
+		return Result{Plans: []string{c.Bin + " \u2026 -> " + out}}, nil
+	}
+	stage := commonDir(req.Inputs)
+	if c.Name == "tar" {
+		args := []string{"-cf", out}
+		for _, in := range req.Inputs {
+			rel, _ := filepath.Rel(stage, in)
+			args = append(args, rel)
+		}
+		cmd := exec.Command("tar", args...)
+		cmd.Dir = stage
+		if b, err := cmd.CombinedOutput(); err != nil {
+			return Result{}, fmt.Errorf("tar create: %w: %s", err, b)
+		}
+		res := Result{Outputs: []string{out}}
+		if err := finalize(req, req.Inputs, []string{out}); err != nil {
+			return res, err
+		}
+		return res, nil
+	}
+	members := make([]string, 0, len(req.Inputs))
+	for _, in := range req.Inputs {
+		rel, _ := filepath.Rel(stage, in)
+		members = append(members, rel)
+	}
+	m := map[string]string{"out": out, "level": levelToken(c, req.Level)}
+	args := substitute(c.CreateArgs, m)
+	args = append(args, members...)
+	args = fixupArchiveArgs(c, args, out, members, stage)
+	cmd := exec.Command(c.Bin, args...)
+	cmd.Dir = stage
+	if b, err := cmd.CombinedOutput(); err != nil {
+		return Result{}, fmt.Errorf("create %s: %w: %s", out, err, b)
+	}
+	res := Result{Outputs: []string{out}}
+	if err := finalize(req, req.Inputs, []string{out}); err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
+func fixupArchiveArgs(c codec.Codec, args []string, out string, members []string, stage string) []string {
+	clean := make([]string, 0, len(args))
+	for _, a := range args {
+		switch a {
+		case "{in}", "{indir}", "{inbase}":
+			continue
+		default:
+			clean = append(clean, a)
+		}
+	}
+	return clean
 }
 
 func createDirect(c codec.Codec, req Request) (Result, error) {
